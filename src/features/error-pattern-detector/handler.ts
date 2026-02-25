@@ -53,37 +53,42 @@ export function detectErrorPattern(
     return { repeated: false, count: 0 };
   }
 
-  const errorDir = getErrorDir(config);
-  fs.mkdirSync(errorDir, { recursive: true });
+  try {
+    const errorDir = getErrorDir(config);
+    fs.mkdirSync(errorDir, { recursive: true });
 
-  const jsonlPath = getJsonlPath(input.session_id, config);
-  const errorMessage = truncateMessage(input.error ?? '', 200);
-  const matchKey = truncateMessage(errorMessage, 100);
+    const jsonlPath = getJsonlPath(input.session_id, config);
+    const errorMessage = truncateMessage(input.error ?? '', 200);
+    const matchKey = truncateMessage(errorMessage, 100);
 
-  // Append the error record
-  const record: ErrorRecord = {
-    timestamp: new Date().toISOString(),
-    tool_name: input.tool_name,
-    error_message: errorMessage,
-    count: 1,
-  };
+    // Append the error record
+    const record: ErrorRecord = {
+      timestamp: new Date().toISOString(),
+      tool_name: input.tool_name,
+      error_message: errorMessage,
+      count: 1,
+    };
 
-  appendJsonlRecord(jsonlPath, record);
+    appendJsonlRecord(jsonlPath, record);
 
-  // Read all records and count matches
-  const records = readJsonlRecords<ErrorRecord>(jsonlPath);
-  const matchingCount = records.filter(
-    (r) => truncateMessage(r.error_message, 100) === matchKey,
-  ).length;
+    // Read all records and count matches
+    const records = readJsonlRecords<ErrorRecord>(jsonlPath);
+    const matchingCount = records.filter(
+      (r) => truncateMessage(r.error_message, 100) === matchKey,
+    ).length;
 
-  const maxRepeats = config.errorPatternDetector.maxRepeats;
+    const maxRepeats = config.errorPatternDetector.maxRepeats;
 
-  if (matchingCount >= maxRepeats) {
-    const message = `REPEATED FAILURE DETECTED: The tool '${input.tool_name}' has failed ${matchingCount} times with a similar error. Consider trying a different approach.`;
-    return { repeated: true, count: matchingCount, message };
+    if (matchingCount >= maxRepeats) {
+      const message = `REPEATED FAILURE DETECTED: The tool '${input.tool_name}' has failed ${matchingCount} times with a similar error. Consider trying a different approach.`;
+      return { repeated: true, count: matchingCount, message };
+    }
+
+    return { repeated: false, count: matchingCount };
+  } catch {
+    // Hook handlers must never crash — return safe default on I/O errors
+    return { repeated: false, count: 0 };
   }
-
-  return { repeated: false, count: matchingCount };
 }
 
 export function createHandler(_hookType: HookEventType): HookHandler<HookInputBase> {
