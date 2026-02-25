@@ -1,0 +1,62 @@
+{
+  "name": "claude-hooks-toolkit",
+  "version": "1.0.0",
+  "description": "Comprehensive Claude Code hooks toolkit — all 13 hook types with security guards, validators, and cross-platform CLI",
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "homepage": "",
+  "keywords": [
+    "claude",
+    "hooks",
+    "claude-code",
+    "cli",
+    "security",
+    "guards",
+    "validators"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "claude-hooks": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "config-schema.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && node scripts/bundle-hooks.mjs",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:hooks": "node scripts/bundle-hooks.mjs",
+    "pretest": "tsc",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^13",
+    "picocolors": "^1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@vitest/coverage-v8": "^3",
+    "esbuild": "^0.27.3",
+    "typescript": "^5.7",
+    "vitest": "^3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

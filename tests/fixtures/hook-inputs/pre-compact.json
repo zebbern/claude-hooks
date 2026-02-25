@@ -1,0 +1,6 @@
+{
+  "session_id": "sess-abc12345-6789-def0-1234-567890abcdef",
+  "transcript_path": "/tmp/claude-transcript-abc123.jsonl",
+  "trigger": "auto",
+  "custom_instructions": "Focus on the authentication refactor"
+}

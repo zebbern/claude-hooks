@@ -1,0 +1,7 @@
+{
+  "session_id": "sess-abc12345-6789-def0-1234-567890abcdef",
+  "agent_id": "agent-xyz-789",
+  "agent_transcript_path": "/tmp/subagent-transcript-xyz789.jsonl",
+  "stop_hook_active": false,
+  "transcript_path": "/tmp/claude-transcript-abc123.jsonl"
+}

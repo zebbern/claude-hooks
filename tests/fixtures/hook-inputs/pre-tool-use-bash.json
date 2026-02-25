@@ -1,0 +1,7 @@
+{
+  "session_id": "sess-abc12345-6789-def0-1234-567890abcdef",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "rm -rf / --no-preserve-root"
+  }
+}

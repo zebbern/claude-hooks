@@ -1,0 +1,527 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/claude-hooks-toolkit/config-schema.json",
+  "title": "Claude Hooks Toolkit Configuration",
+  "description": "Configuration schema for claude-hooks-toolkit. Create a claude-hooks.config.json in your project root — only specify overrides, everything deep-merges with built-in defaults.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path to the JSON Schema for editor autocompletion."
+    },
+    "logDir": {
+      "type": "string",
+      "description": "Directory for hook log files.",
+      "default": "logs/claude-hooks"
+    },
+    "transcriptBackupDir": {
+      "type": "string",
+      "description": "Directory for session transcript backups.",
+      "default": "logs/claude-hooks/transcript-backups"
+    },
+    "guards": {
+      "type": "object",
+      "description": "Security guard configurations that block or warn on dangerous operations.",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "object",
+          "description": "Blocks dangerous shell commands matching regex patterns.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the command guard is active.",
+              "default": true
+            },
+            "blockedPatterns": {
+              "type": "array",
+              "description": "Regex patterns for commands to block. Replaces defaults when specified.",
+              "items": { "type": "string" },
+              "default": [
+                "rm\\s+.*-[a-z]*r[a-z]*f",
+                "rm\\s+-rf\\s+/",
+                "rm\\s+-rf\\s+~",
+                "rm\\s+-rf\\s+\\.",
+                "chmod\\s+777",
+                "mkfs",
+                "dd\\s+if=",
+                ">\\s*/dev/sda",
+                "shutdown",
+                "reboot",
+                ":\\(\\)\\{\\s*:\\|:\\s*&\\s*\\};:"
+              ]
+            },
+            "allowedPatterns": {
+              "type": "array",
+              "description": "Regex patterns for commands that are always allowed, even if they match a blocked pattern.",
+              "items": { "type": "string" },
+              "default": []
+            }
+          }
+        },
+        "file": {
+          "type": "object",
+          "description": "Protects sensitive files from being written to.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the file guard is active.",
+              "default": true
+            },
+            "protectedPatterns": {
+              "type": "array",
+              "description": "Glob patterns for files to protect (matched against basename).",
+              "items": { "type": "string" },
+              "default": [".env", "*.pem", "*.key", "id_rsa*", "*.secret*"]
+            }
+          }
+        },
+        "path": {
+          "type": "object",
+          "description": "Prevents path traversal outside allowed root directories.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the path guard is active.",
+              "default": true
+            },
+            "allowedRoots": {
+              "type": "array",
+              "description": "Allowed root directories. Empty array means the current working directory is used.",
+              "items": { "type": "string" },
+              "default": []
+            }
+          }
+        },
+        "diffSize": {
+          "type": "object",
+          "description": "Warns or blocks when a diff exceeds a maximum line count.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the diff size guard is active.",
+              "default": false
+            },
+            "maxLines": {
+              "type": "number",
+              "description": "Maximum number of changed lines allowed in a single diff.",
+              "minimum": 1,
+              "default": 500
+            }
+          }
+        },
+        "branch": {
+          "type": "object",
+          "description": "Prevents commits to protected branches.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the branch guard is active.",
+              "default": false
+            },
+            "protectedBranches": {
+              "type": "array",
+              "description": "Branch name patterns to protect (supports glob wildcards).",
+              "items": { "type": "string" },
+              "default": ["main", "master", "production", "release/*"]
+            }
+          }
+        },
+        "secretLeak": {
+          "type": "object",
+          "description": "Scans tool output for leaked secrets (API keys, tokens, passwords).",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the secret leak guard is active.",
+              "default": true
+            },
+            "customPatterns": {
+              "type": "array",
+              "description": "Additional regex patterns to detect secrets beyond built-in patterns.",
+              "items": { "type": "string" },
+              "default": []
+            },
+            "allowedPatterns": {
+              "type": "array",
+              "description": "Regex patterns for values that should not be flagged as secrets.",
+              "items": { "type": "string" },
+              "default": []
+            }
+          }
+        },
+        "scope": {
+          "type": "object",
+          "description": "Restricts file operations to specific directory paths.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the scope guard is active.",
+              "default": false
+            },
+            "allowedPaths": {
+              "type": "array",
+              "description": "Glob patterns for allowed file paths. Operations outside these paths are blocked.",
+              "items": { "type": "string" },
+              "default": []
+            }
+          }
+        }
+      }
+    },
+    "validators": {
+      "type": "object",
+      "description": "Post-edit validators that run linters, type checkers, or tests after tool use.",
+      "additionalProperties": false,
+      "properties": {
+        "lint": {
+          "type": "object",
+          "description": "Runs a linter command after file edits.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the lint validator is active.",
+              "default": false
+            },
+            "command": {
+              "type": "string",
+              "description": "Shell command to run the linter.",
+              "default": "npx eslint --no-warn-ignored"
+            }
+          }
+        },
+        "typecheck": {
+          "type": "object",
+          "description": "Runs a type checker command after file edits.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the typecheck validator is active.",
+              "default": false
+            },
+            "command": {
+              "type": "string",
+              "description": "Shell command to run the type checker.",
+              "default": "npx tsc --noEmit"
+            }
+          }
+        },
+        "test": {
+          "type": "object",
+          "description": "Runs a test command after file edits.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the test validator is active.",
+              "default": false
+            },
+            "command": {
+              "type": "string",
+              "description": "Shell command to run tests.",
+              "default": ""
+            },
+            "timeout": {
+              "type": "number",
+              "description": "Maximum time in milliseconds to wait for the test command.",
+              "minimum": 1,
+              "default": 60000
+            }
+          }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "description": "Automatic permission decisions for tool use requests.",
+      "additionalProperties": false,
+      "properties": {
+        "autoAllow": {
+          "type": "array",
+          "description": "Tool name patterns (regex) to automatically allow.",
+          "items": { "type": "string" },
+          "default": ["Read", "Glob", "Grep"]
+        },
+        "autoDeny": {
+          "type": "array",
+          "description": "Tool name patterns (regex) to automatically deny.",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "autoAsk": {
+          "type": "array",
+          "description": "Tool name patterns (regex) to always prompt the user for.",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "promptHistory": {
+      "type": "object",
+      "description": "Records all user prompts to a JSONL log file.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether prompt history recording is active.",
+          "default": true
+        }
+      }
+    },
+    "fileBackup": {
+      "type": "object",
+      "description": "Creates backups of files before they are modified by tools.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether file backup is active.",
+          "default": false
+        },
+        "backupDir": {
+          "type": "string",
+          "description": "Directory where file backups are stored.",
+          "default": "logs/claude-hooks/file-backups"
+        }
+      }
+    },
+    "costTracker": {
+      "type": "object",
+      "description": "Tracks tool call counts and writes cost reports per session.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether cost tracking is active.",
+          "default": false
+        },
+        "outputPath": {
+          "type": "string",
+          "description": "Directory where cost report files are written.",
+          "default": "logs/claude-hooks/cost-reports"
+        }
+      }
+    },
+    "webhooks": {
+      "type": "object",
+      "description": "Sends webhook notifications on specified hook events.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether webhook notifications are active.",
+          "default": false
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to send webhook POST requests to.",
+          "default": ""
+        },
+        "events": {
+          "type": "array",
+          "description": "Hook event types that trigger a webhook notification.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "PreToolUse",
+              "PostToolUse",
+              "PostToolUseFailure",
+              "UserPromptSubmit",
+              "Notification",
+              "Stop",
+              "SubagentStart",
+              "SubagentStop",
+              "PreCompact",
+              "Setup",
+              "SessionStart",
+              "SessionEnd",
+              "PermissionRequest"
+            ]
+          },
+          "default": ["Stop", "Notification"]
+        },
+        "includeFullInput": {
+          "type": "boolean",
+          "description": "When true, the full hook input is included in webhook payloads.",
+          "default": false
+        }
+      }
+    },
+    "changeSummary": {
+      "type": "object",
+      "description": "Generates a summary of all changes made during a session.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether change summary generation is active.",
+          "default": false
+        },
+        "outputPath": {
+          "type": "string",
+          "description": "Directory where change summary files are written.",
+          "default": "logs/claude-hooks/change-summaries"
+        }
+      }
+    },
+    "rateLimiter": {
+      "type": "object",
+      "description": "Limits the number of tool calls or file edits per session.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether rate limiting is active.",
+          "default": false
+        },
+        "maxToolCallsPerSession": {
+          "type": "number",
+          "description": "Maximum number of tool calls allowed per session. 0 means unlimited.",
+          "minimum": 0,
+          "default": 0
+        },
+        "maxFileEditsPerSession": {
+          "type": "number",
+          "description": "Maximum number of file edit operations per session. 0 means unlimited.",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "todoTracker": {
+      "type": "object",
+      "description": "Scans files for TODO/FIXME comments and generates reports.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether TODO tracking is active.",
+          "default": false
+        },
+        "outputPath": {
+          "type": "string",
+          "description": "Directory where TODO report files are written.",
+          "default": "logs/claude-hooks/todo-reports"
+        },
+        "patterns": {
+          "type": "array",
+          "description": "Regex patterns to match as TODO-like comments.",
+          "items": { "type": "string" },
+          "default": ["TODO", "FIXME", "HACK", "XXX"]
+        }
+      }
+    },
+    "errorPatternDetector": {
+      "type": "object",
+      "description": "Detects repeated error patterns and stops the session if a loop is detected.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether error pattern detection is active.",
+          "default": false
+        },
+        "maxRepeats": {
+          "type": "number",
+          "description": "Number of repeated identical errors before intervention.",
+          "minimum": 1,
+          "default": 3
+        }
+      }
+    },
+    "contextInjector": {
+      "type": "object",
+      "description": "Injects additional context from files into session prompts.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether context injection is active.",
+          "default": false
+        },
+        "contextFiles": {
+          "type": "array",
+          "description": "File paths (relative to project root) to inject as additional context.",
+          "items": { "type": "string" },
+          "default": [".claude/context.md"]
+        }
+      }
+    },
+    "autoCommit": {
+      "type": "object",
+      "description": "Automatically creates git commits after successful tool operations.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether auto-commit is active.",
+          "default": false
+        },
+        "messageTemplate": {
+          "type": "string",
+          "description": "Template for auto-generated commit messages. Empty string uses a default template.",
+          "default": ""
+        }
+      }
+    },
+    "projectVisualizer": {
+      "type": "object",
+      "description": "Generates a visual project structure overview.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether project visualization is active.",
+          "default": false
+        },
+        "outputPath": {
+          "type": "string",
+          "description": "Directory where project visualization files are written.",
+          "default": "logs/claude-hooks/project-viz"
+        },
+        "maxDepth": {
+          "type": "number",
+          "description": "Maximum directory depth to traverse for visualization.",
+          "minimum": 1,
+          "default": 2
+        }
+      }
+    },
+    "defaultTimeout": {
+      "type": "number",
+      "description": "Default timeout in seconds for all hook commands.",
+      "minimum": 1,
+      "default": 30
+    },
+    "hookTimeouts": {
+      "type": "object",
+      "description": "Per-hook-type timeout overrides in seconds.",
+      "additionalProperties": false,
+      "properties": {
+        "PreToolUse": { "type": "number", "minimum": 1, "description": "Timeout in seconds for PreToolUse hooks." },
+        "PostToolUse": { "type": "number", "minimum": 1, "description": "Timeout in seconds for PostToolUse hooks." },
+        "PostToolUseFailure": { "type": "number", "minimum": 1, "description": "Timeout in seconds for PostToolUseFailure hooks." },
+        "UserPromptSubmit": { "type": "number", "minimum": 1, "description": "Timeout in seconds for UserPromptSubmit hooks." },
+        "Notification": { "type": "number", "minimum": 1, "description": "Timeout in seconds for Notification hooks." },
+        "Stop": { "type": "number", "minimum": 1, "description": "Timeout in seconds for Stop hooks." },
+        "SubagentStart": { "type": "number", "minimum": 1, "description": "Timeout in seconds for SubagentStart hooks." },
+        "SubagentStop": { "type": "number", "minimum": 1, "description": "Timeout in seconds for SubagentStop hooks." },
+        "PreCompact": { "type": "number", "minimum": 1, "description": "Timeout in seconds for PreCompact hooks." },
+        "Setup": { "type": "number", "minimum": 1, "description": "Timeout in seconds for Setup hooks." },
+        "SessionStart": { "type": "number", "minimum": 1, "description": "Timeout in seconds for SessionStart hooks." },
+        "SessionEnd": { "type": "number", "minimum": 1, "description": "Timeout in seconds for SessionEnd hooks." },
+        "PermissionRequest": { "type": "number", "minimum": 1, "description": "Timeout in seconds for PermissionRequest hooks." }
+      }
+    }
+  }
+}

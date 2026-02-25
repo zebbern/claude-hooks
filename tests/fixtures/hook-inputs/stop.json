@@ -1,0 +1,5 @@
+{
+  "session_id": "sess-abc12345-6789-def0-1234-567890abcdef",
+  "stop_hook_active": true,
+  "transcript_path": "/tmp/claude-transcript-abc123.jsonl"
+}

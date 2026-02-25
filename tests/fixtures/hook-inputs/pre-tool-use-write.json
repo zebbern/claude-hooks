@@ -1,0 +1,8 @@
+{
+  "session_id": "sess-abc12345-6789-def0-1234-567890abcdef",
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "/home/user/project/.env",
+    "content": "SECRET_KEY=super-secret-value"
+  }
+}

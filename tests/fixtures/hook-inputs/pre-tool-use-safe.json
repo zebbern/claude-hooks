@@ -1,0 +1,7 @@
+{
+  "session_id": "sess-abc12345-6789-def0-1234-567890abcdef",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/home/user/project/src/index.ts"
+  }
+}
